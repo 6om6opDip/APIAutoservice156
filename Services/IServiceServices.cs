@@ -1,0 +1,6 @@
+﻿namespace APIAutoservice156.Services
+{
+    public class IServiceServices
+    {
+    }
+}
