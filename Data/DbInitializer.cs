@@ -7,13 +7,33 @@ namespace APIAutoservice156.Data
     {
         public static void Initialize(AppDbContext context)
         {
-            // Пропустим заполнение, если в базе уже есть данные
-            if (context.Clients.Any() || context.Services.Any())
+            if (!context.Users.Any())
             {
-                return; // DB has been seeded
+                var users = new User[]
+                {
+                    new User {
+                        Username = "admin",
+                        Email = "admin@autoservice.com",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                        Role = "Admin"
+                    },
+                    new User {
+                        Username = "mechanic",
+                        Email = "mechanic@autoservice.com",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("mechanic123"),
+                        Role = "Mechanic"
+                    },
+                    new User {
+                        Username = "user",
+                        Email = "user@example.com",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("user123"),
+                        Role = "User"
+                    }
+                };
+                context.Users.AddRange(users);
+                context.SaveChanges();
             }
 
-            // 1. Создаем Клиентов
             var clients = new Client[]
             {
                 new Client{FirstName="Иван", LastName="Иванов", PhoneNumber="+79111111111", Email="ivan@mail.ru"},
@@ -25,7 +45,6 @@ namespace APIAutoservice156.Data
             context.Clients.AddRange(clients);
             context.SaveChanges();
 
-            // 2. Создаем Транспортные средства для клиентов
             var vehicles = new Vehicle[]
             {
                 new Vehicle{Brand="Toyota", Model="Camry", Year=2018, LicensePlate="А111АА777", ClientId=clients[0].Id},
@@ -38,7 +57,6 @@ namespace APIAutoservice156.Data
             context.Vehicles.AddRange(vehicles);
             context.SaveChanges();
 
-            // 3. Создаем Услуги
             var services = new Service[]
             {
                 new Service{Name="Замена масла двигателя", Description="Полная замена моторного масла и масляного фильтра", Price=2000, DurationMinutes=30},
@@ -50,7 +68,6 @@ namespace APIAutoservice156.Data
             context.Services.AddRange(services);
             context.SaveChanges();
 
-            // 4. Создаем Записи (Appointments)
             var appointments = new Appointment[]
             {
                 new Appointment{AppointmentDateTime=DateTime.Now.AddDays(1), Status="Запланирован", VehicleId=vehicles[0].Id},
@@ -62,7 +79,6 @@ namespace APIAutoservice156.Data
             context.Appointments.AddRange(appointments);
             context.SaveChanges();
 
-            // 5. Создаем связи между Записями и Услугами (ServiceAppointment)
             var serviceAppointments = new ServiceAppointment[]
             {
                 new ServiceAppointment{AppointmentId=appointments[0].Id, ServiceId=services[0].Id},
@@ -77,4 +93,4 @@ namespace APIAutoservice156.Data
             context.SaveChanges();
         }
     }
-}   
+}

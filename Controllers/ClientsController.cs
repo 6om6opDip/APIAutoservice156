@@ -1,5 +1,6 @@
 ﻿using APIAutoservice156.Data;
 using APIAutoservice156.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ namespace APIAutoservice156.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] 
     public class ClientsController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -71,11 +73,11 @@ namespace APIAutoservice156.Controllers
                 }
                 else
                 {
-                    throw;
+                    throw;  
                 }
             }
 
-            return NoContent();
+            return NoContent(); 
         }
 
         // DELETE: api/Clients/5

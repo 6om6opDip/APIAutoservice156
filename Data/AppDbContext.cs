@@ -1,7 +1,5 @@
-﻿    using APIAutoservice156.Models;
-    using Microsoft.EntityFrameworkCore;
-    using System.Collections.Generic;
-    using System.Reflection.Emit;
+﻿using Microsoft.EntityFrameworkCore;
+using APIAutoservice156.Models;
 
 namespace APIAutoservice156.Data
 {
@@ -11,6 +9,7 @@ namespace APIAutoservice156.Data
         {
         }
 
+        public DbSet<User> Users { get; set; }
         public DbSet<Client> Clients { get; set; }
         public DbSet<Vehicle> Vehicles { get; set; }
         public DbSet<Service> Services { get; set; }
@@ -19,6 +18,16 @@ namespace APIAutoservice156.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Настройка User
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            // Остальные настройки...
             modelBuilder.Entity<ServiceAppointment>()
                 .HasKey(sa => new { sa.AppointmentId, sa.ServiceId });
 
@@ -29,7 +38,7 @@ namespace APIAutoservice156.Data
 
             modelBuilder.Entity<Appointment>()
                 .HasOne(a => a.Vehicle)
-                .WithMany() 
+                .WithMany()
                 .HasForeignKey(a => a.VehicleId)
                 .OnDelete(DeleteBehavior.Cascade);
 
