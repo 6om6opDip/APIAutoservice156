@@ -3,11 +3,16 @@
     public class Vehicle
     {
         public int Id { get; set; }
-        public string Brand { get; set; } = string.Empty; 
-        public string Model { get; set; } = string.Empty; 
-        public int Year { get; set; } 
-        public string LicensePlate { get; set; } = string.Empty; 
+        public string Brand { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public int Year { get; set; }
+        public string LicensePlate { get; set; } = string.Empty;
+        public string? VIN { get; set; }
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
         public int ClientId { get; set; }
-        public Client Client { get; set; } = null!;
+
+        public Client? Client { get; set; }
+        public List<Appointment> Appointments { get; set; } = new List<Appointment>();
     }
 }

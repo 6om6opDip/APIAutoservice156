@@ -1,31 +1,24 @@
 ﻿using APIAutoservice156.Models;
 using APIAutoservice156.Models.DTO;
 using APIAutoservice156.Repositories;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
-namespace APIAutoservice156.Controllers
+namespace APIAutoservice156.Services
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    [Authorize]
-    public class VehiclesController : ControllerBase
+    public class VehiclesService : IVehiclesService
     {
         private readonly IVehicleRepository _vehicleRepository;
         private readonly IClientsRepository _clientsRepository;
 
-        public VehiclesController(IVehicleRepository vehicleRepository, IClientsRepository clientsRepository)
+        public VehiclesService(IVehicleRepository vehicleRepository, IClientsRepository clientsRepository)
         {
             _vehicleRepository = vehicleRepository;
             _clientsRepository = clientsRepository;
         }
 
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<VehicleDTO>>> GetVehicles()
+        public async Task<IEnumerable<VehicleDTO>> GetAllVehiclesAsync()
         {
             var vehicles = await _vehicleRepository.GetAllAsync();
-            var vehicleDtos = vehicles.Select(v => new VehicleDTO
+            return vehicles.Select(v => new VehicleDTO
             {
                 Id = v.Id,
                 Brand = v.Brand,
@@ -37,21 +30,14 @@ namespace APIAutoservice156.Controllers
                 ClientName = $"{v.Client?.FirstName} {v.Client?.LastName}",
                 CreatedAt = v.CreatedAt
             });
-
-            return Ok(vehicleDtos);
         }
 
-
-        [HttpGet("{id}")]
-        public async Task<ActionResult<VehicleDTO>> GetVehicle(int id)
+        public async Task<VehicleDTO?> GetVehicleByIdAsync(int id)
         {
             var vehicle = await _vehicleRepository.GetByIdAsync(id);
-            if (vehicle == null)
-            {
-                return NotFound();
-            }
+            if (vehicle == null) return null;
 
-            var vehicleDto = new VehicleDTO
+            return new VehicleDTO
             {
                 Id = vehicle.Id,
                 Brand = vehicle.Brand,
@@ -63,18 +49,13 @@ namespace APIAutoservice156.Controllers
                 ClientName = $"{vehicle.Client?.FirstName} {vehicle.Client?.LastName}",
                 CreatedAt = vehicle.CreatedAt
             };
-
-            return Ok(vehicleDto);
         }
 
-
-        [HttpPost]
-        [Authorize(Roles = "Admin,Mechanic")]
-        public async Task<ActionResult<VehicleDTO>> PostVehicle(CreateVehicleDTO createVehicleDto)
+        public async Task<VehicleDTO> CreateVehicleAsync(CreateVehicleDTO createVehicleDto)
         {
             if (!await _clientsRepository.ExistsAsync(createVehicleDto.ClientId))
             {
-                return BadRequest("Client not found");
+                throw new ArgumentException("Client not found");
             }
 
             var vehicle = new Vehicle
@@ -90,7 +71,7 @@ namespace APIAutoservice156.Controllers
 
             var createdVehicle = await _vehicleRepository.CreateAsync(vehicle);
 
-            var vehicleDto = new VehicleDTO
+            return new VehicleDTO
             {
                 Id = createdVehicle.Id,
                 Brand = createdVehicle.Brand,
@@ -101,15 +82,53 @@ namespace APIAutoservice156.Controllers
                 ClientId = createdVehicle.ClientId,
                 CreatedAt = createdVehicle.CreatedAt
             };
-
-            return CreatedAtAction(nameof(GetVehicle), new { id = vehicleDto.Id }, vehicleDto);
         }
 
-        [HttpGet("client/{clientId}")]
-        public async Task<ActionResult<IEnumerable<VehicleDTO>>> GetVehiclesByClient(int clientId)
+        public async Task<VehicleDTO?> UpdateVehicleAsync(int id, UpdateVehicleDTO updateVehicleDto)
+        {
+            var existingVehicle = await _vehicleRepository.GetByIdAsync(id);
+            if (existingVehicle == null) return null;
+
+            if (!string.IsNullOrEmpty(updateVehicleDto.Brand))
+                existingVehicle.Brand = updateVehicleDto.Brand;
+
+            if (!string.IsNullOrEmpty(updateVehicleDto.Model))
+                existingVehicle.Model = updateVehicleDto.Model;
+
+            if (updateVehicleDto.Year.HasValue)
+                existingVehicle.Year = updateVehicleDto.Year.Value;
+
+            if (!string.IsNullOrEmpty(updateVehicleDto.LicensePlate))
+                existingVehicle.LicensePlate = updateVehicleDto.LicensePlate;
+
+            if (updateVehicleDto.VIN != null)
+                existingVehicle.VIN = updateVehicleDto.VIN;
+
+            var updatedVehicle = await _vehicleRepository.UpdateAsync(id, existingVehicle);
+            if (updatedVehicle == null) return null;
+
+            return new VehicleDTO
+            {
+                Id = updatedVehicle.Id,
+                Brand = updatedVehicle.Brand,
+                Model = updatedVehicle.Model,
+                Year = updatedVehicle.Year,
+                LicensePlate = updatedVehicle.LicensePlate,
+                VIN = updatedVehicle.VIN,
+                ClientId = updatedVehicle.ClientId,
+                CreatedAt = updatedVehicle.CreatedAt
+            };
+        }
+
+        public async Task<bool> DeleteVehicleAsync(int id)
+        {
+            return await _vehicleRepository.DeleteAsync(id);
+        }
+
+        public async Task<IEnumerable<VehicleDTO>> GetVehiclesByClientIdAsync(int clientId)
         {
             var vehicles = await _vehicleRepository.GetByClientIdAsync(clientId);
-            var vehicleDtos = vehicles.Select(v => new VehicleDTO
+            return vehicles.Select(v => new VehicleDTO
             {
                 Id = v.Id,
                 Brand = v.Brand,
@@ -120,8 +139,6 @@ namespace APIAutoservice156.Controllers
                 ClientId = v.ClientId,
                 CreatedAt = v.CreatedAt
             });
-
-            return Ok(vehicleDtos);
         }
     }
 }

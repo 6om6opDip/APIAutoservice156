@@ -1,104 +1,119 @@
-﻿using APIAutoservice156.Data;
-using APIAutoservice156.Models;
+﻿using APIAutoservice156.Models;
+using APIAutoservice156.Models.DTO;
+using APIAutoservice156.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace APIAutoservice156.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
-    [Authorize] 
+    [Route("api/[controller]")]
+    [Authorize]
     public class ClientsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly IClientsRepository _clientsRepository;
 
-        public ClientsController(AppDbContext context)
+        public ClientsController(IClientsRepository clientsRepository)
         {
-            _context = context;
+            _clientsRepository = clientsRepository;
         }
 
-        // GET: api/Clients
+
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Client>>> GetClients()
+        public async Task<ActionResult<IEnumerable<ClientDTO>>> GetClients()
         {
-            return await _context.Clients.ToListAsync();
+            var clients = await _clientsRepository.GetAllAsync();
+            var clientDtos = clients.Select(c => new ClientDTO
+            {
+                Id = c.Id,
+                FirstName = c.FirstName,
+                LastName = c.LastName,
+                PhoneNumber = c.PhoneNumber,
+                Email = c.Email,
+                CreatedAt = c.CreatedAt,
+                VehicleCount = c.Vehicles.Count
+            });
+
+            return Ok(clientDtos);
         }
 
-        // GET: api/Clients/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Client>> GetClient(int id)
+        public async Task<ActionResult<ClientDTO>> GetClient(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
-
+            var client = await _clientsRepository.GetByIdAsync(id);
             if (client == null)
             {
                 return NotFound();
             }
 
-            return client;
+            var clientDto = new ClientDTO
+            {
+                Id = client.Id,
+                FirstName = client.FirstName,
+                LastName = client.LastName,
+                PhoneNumber = client.PhoneNumber,
+                Email = client.Email,
+                CreatedAt = client.CreatedAt,
+                VehicleCount = client.Vehicles.Count
+            };
+
+            return Ok(clientDto);
         }
 
-        // POST: api/Clients
+
         [HttpPost]
-        public async Task<ActionResult<Client>> PostClient(Client client)
+        [Authorize(Roles = "Admin,Mechanic")]
+        public async Task<ActionResult<ClientDTO>> PostClient(CreateClientDTO createClientDto)
         {
-            _context.Clients.Add(client);
-            await _context.SaveChangesAsync();
+            var client = new Client
+            {
+                FirstName = createClientDto.FirstName,
+                LastName = createClientDto.LastName,
+                PhoneNumber = createClientDto.PhoneNumber,
+                Email = createClientDto.Email,
+                CreatedAt = DateTime.UtcNow
+            };
 
-            return CreatedAtAction("GetClient", new { id = client.Id }, client);
+            var createdClient = await _clientsRepository.CreateAsync(client);
+
+            var clientDto = new ClientDTO
+            {
+                Id = createdClient.Id,
+                FirstName = createdClient.FirstName,
+                LastName = createdClient.LastName,
+                PhoneNumber = createdClient.PhoneNumber,
+                Email = createdClient.Email,
+                CreatedAt = createdClient.CreatedAt,
+                VehicleCount = 0
+            };
+
+            return CreatedAtAction(nameof(GetClient), new { id = clientDto.Id }, clientDto);
         }
 
-        // PUT: api/Clients/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutClient(int id, Client client)
+        [Authorize(Roles = "Admin,Mechanic")]
+        public async Task<IActionResult> PutClient(int id, UpdateClientDTO updateClientDto)
         {
-            if (id != client.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(client).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ClientExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;  
-                }
-            }
-
-            return NoContent(); 
-        }
-
-        // DELETE: api/Clients/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteClient(int id)
-        {
-            var client = await _context.Clients.FindAsync(id);
+            var client = await _clientsRepository.UpdateAsync(id, updateClientDto);
             if (client == null)
             {
                 return NotFound();
             }
-
-            _context.Clients.Remove(client);
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool ClientExists(int id)
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteClient(int id)
         {
-            return _context.Clients.Any(e => e.Id == id);
+            var result = await _clientsRepository.DeleteAsync(id);
+            if (!result)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
         }
     }
 }

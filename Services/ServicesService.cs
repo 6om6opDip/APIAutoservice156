@@ -1,28 +1,22 @@
 ﻿using APIAutoservice156.Models;
 using APIAutoservice156.Models.DTO;
 using APIAutoservice156.Repositories;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 
-namespace APIAutoservice156.Controllers
+namespace APIAutoservice156.Services
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ServicesController : ControllerBase
+    public class ServicesService : IServicesService
     {
         private readonly IServiceRepository _serviceRepository;
 
-        public ServicesController(IServiceRepository serviceRepository)
+        public ServicesService(IServiceRepository serviceRepository)
         {
             _serviceRepository = serviceRepository;
         }
 
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<ServiceDTO>>> GetServices()
+        public async Task<IEnumerable<ServiceDTO>> GetAllServicesAsync()
         {
             var services = await _serviceRepository.GetAllAsync();
-            var serviceDtos = services.Select(s => new ServiceDTO
+            return services.Select(s => new ServiceDTO
             {
                 Id = s.Id,
                 Name = s.Name,
@@ -33,16 +27,12 @@ namespace APIAutoservice156.Controllers
                 IsActive = s.IsActive,
                 CreatedAt = s.CreatedAt
             });
-
-            return Ok(serviceDtos);
         }
 
-        [HttpGet("active")]
-        [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<ServiceDTO>>> GetActiveServices()
+        public async Task<IEnumerable<ServiceDTO>> GetActiveServicesAsync()
         {
             var services = await _serviceRepository.GetActiveServicesAsync();
-            var serviceDtos = services.Select(s => new ServiceDTO
+            return services.Select(s => new ServiceDTO
             {
                 Id = s.Id,
                 Name = s.Name,
@@ -53,22 +43,14 @@ namespace APIAutoservice156.Controllers
                 IsActive = s.IsActive,
                 CreatedAt = s.CreatedAt
             });
-
-            return Ok(serviceDtos);
         }
 
-
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<ActionResult<ServiceDTO>> GetService(int id)
+        public async Task<ServiceDTO?> GetServiceByIdAsync(int id)
         {
             var service = await _serviceRepository.GetByIdAsync(id);
-            if (service == null)
-            {
-                return NotFound();
-            }
+            if (service == null) return null;
 
-            var serviceDto = new ServiceDTO
+            return new ServiceDTO
             {
                 Id = service.Id,
                 Name = service.Name,
@@ -79,13 +61,9 @@ namespace APIAutoservice156.Controllers
                 IsActive = service.IsActive,
                 CreatedAt = service.CreatedAt
             };
-
-            return Ok(serviceDto);
         }
 
-        [HttpPost]
-        [Authorize(Roles = "Admin")]
-        public async Task<ActionResult<ServiceDTO>> PostService(CreateServiceDTO createServiceDto)
+        public async Task<ServiceDTO> CreateServiceAsync(CreateServiceDTO createServiceDto)
         {
             var service = new Service
             {
@@ -100,7 +78,7 @@ namespace APIAutoservice156.Controllers
 
             var createdService = await _serviceRepository.CreateAsync(service);
 
-            var serviceDto = new ServiceDTO
+            return new ServiceDTO
             {
                 Id = createdService.Id,
                 Name = createdService.Name,
@@ -111,8 +89,50 @@ namespace APIAutoservice156.Controllers
                 IsActive = createdService.IsActive,
                 CreatedAt = createdService.CreatedAt
             };
+        }
 
-            return CreatedAtAction(nameof(GetService), new { id = serviceDto.Id }, serviceDto);
+        public async Task<ServiceDTO?> UpdateServiceAsync(int id, UpdateServiceDTO updateServiceDto)
+        {
+            var existingService = await _serviceRepository.GetByIdAsync(id);
+            if (existingService == null) return null;
+
+            if (!string.IsNullOrEmpty(updateServiceDto.Name))
+                existingService.Name = updateServiceDto.Name;
+
+            if (updateServiceDto.Description != null)
+                existingService.Description = updateServiceDto.Description;
+
+            if (updateServiceDto.Price.HasValue)
+                existingService.Price = updateServiceDto.Price.Value;
+
+            if (updateServiceDto.DurationMinutes.HasValue)
+                existingService.DurationMinutes = updateServiceDto.DurationMinutes.Value;
+
+            if (!string.IsNullOrEmpty(updateServiceDto.Category))
+                existingService.Category = updateServiceDto.Category;
+
+            if (updateServiceDto.IsActive.HasValue)
+                existingService.IsActive = updateServiceDto.IsActive.Value;
+
+            var updatedService = await _serviceRepository.UpdateAsync(id, existingService);
+            if (updatedService == null) return null;
+
+            return new ServiceDTO
+            {
+                Id = updatedService.Id,
+                Name = updatedService.Name,
+                Description = updatedService.Description,
+                Price = updatedService.Price,
+                DurationMinutes = updatedService.DurationMinutes,
+                Category = updatedService.Category,
+                IsActive = updatedService.IsActive,
+                CreatedAt = updatedService.CreatedAt
+            };
+        }
+
+        public async Task<bool> DeleteServiceAsync(int id)
+        {
+            return await _serviceRepository.DeleteAsync(id);
         }
     }
 }

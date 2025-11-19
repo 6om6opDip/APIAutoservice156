@@ -7,32 +7,34 @@ namespace APIAutoservice156.Data
     {
         public static void Initialize(AppDbContext context)
         {
-            if (!context.Users.Any())
+            if (context.Users.Any() || context.Clients.Any() || context.Services.Any())
             {
-                var users = new User[]
-                {
-                    new User {
-                        Username = "admin",
-                        Email = "admin@autoservice.com",
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
-                        Role = "Admin"
-                    },
-                    new User {
-                        Username = "mechanic",
-                        Email = "mechanic@autoservice.com",
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("mechanic123"),
-                        Role = "Mechanic"
-                    },
-                    new User {
-                        Username = "user",
-                        Email = "user@example.com",
-                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("user123"),
-                        Role = "User"
-                    }
-                };
-                context.Users.AddRange(users);
-                context.SaveChanges();
+                return;
             }
+
+            var users = new User[]
+            {
+        new User {
+            Username = "admin",
+            Email = "admin@autoservice.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+            Role = "Admin"
+        },
+        new User {
+            Username = "mechanic",
+            Email = "mechanic@autoservice.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("mechanic123"),
+            Role = "Mechanic"
+        },
+        new User {
+            Username = "user",
+            Email = "user@example.com",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("user123"),
+            Role = "User"
+        }
+            };
+            context.Users.AddRange(users);
+            context.SaveChanges();
 
             var clients = new Client[]
             {
@@ -91,6 +93,7 @@ namespace APIAutoservice156.Data
             };
             context.ServiceAppointments.AddRange(serviceAppointments);
             context.SaveChanges();
+
         }
     }
 }
