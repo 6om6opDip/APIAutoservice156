@@ -11,6 +11,16 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<APIAutoservice156.Repositories.IClientsRepository, APIAutoservice156.Repositories.ClientsRepository>();
+builder.Services.AddScoped<APIAutoservice156.Repositories.IVehicleRepository, APIAutoservice156.Repositories.VehicleRepository>();
+builder.Services.AddScoped<APIAutoservice156.Repositories.IServiceRepository, APIAutoservice156.Repositories.ServiceRepository>();
+
+// Services  
+builder.Services.AddScoped<APIAutoservice156.Services.IAuthService, APIAutoservice156.Services.AuthService>();
+builder.Services.AddScoped<APIAutoservice156.Services.IClientsService, APIAutoservice156.Services.ClientsService>();
+builder.Services.AddScoped<APIAutoservice156.Services.IVehiclesService, APIAutoservice156.Services.VehiclesService>();
+builder.Services.AddScoped<APIAutoservice156.Services.IServicesService, APIAutoservice156.Services.ServicesService>();
+
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
