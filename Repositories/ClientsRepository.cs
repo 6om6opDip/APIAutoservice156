@@ -16,58 +16,99 @@ namespace APIAutoservice156.Repositories
 
         public async Task<IEnumerable<Client>> GetAllAsync()
         {
-            return await _context.Clients
-                .Include(c => c.Vehicles)
-                .OrderBy(c => c.LastName)
-                .ThenBy(c => c.FirstName)
-                .ToListAsync();
+            try
+            {
+                // Временное решение: без Include
+                return await _context.Clients
+                    //.Include(c => c.Vehicles)  // ЗАКОММЕНТИРОВАТЬ ДЛЯ ТЕСТА
+                    .OrderBy(c => c.LastName)
+                    .ThenBy(c => c.FirstName)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ GetAllAsync error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Client?> GetByIdAsync(int id)
         {
-            return await _context.Clients
-                .Include(c => c.Vehicles)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            try
+            {
+                return await _context.Clients
+                    //.Include(c => c.Vehicles)  // ЗАКОММЕНТИРОВАТЬ ДЛЯ ТЕСТА
+                    .FirstOrDefaultAsync(c => c.Id == id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ GetByIdAsync error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Client> CreateAsync(Client client)
         {
-            _context.Clients.Add(client);
-            await _context.SaveChangesAsync();
-            return client;
+            try
+            {
+                _context.Clients.Add(client);
+                await _context.SaveChangesAsync();
+                return client;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ CreateAsync error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<Client?> UpdateAsync(int id, UpdateClientDTO clientDto)
         {
-            var client = await _context.Clients.FindAsync(id);
-            if (client == null) return null;
+            try
+            {
+                var client = await _context.Clients.FindAsync(id);
+                if (client == null) return null;
 
-            if (!string.IsNullOrEmpty(clientDto.FirstName))
-                client.FirstName = clientDto.FirstName;
+                if (!string.IsNullOrEmpty(clientDto.FirstName))
+                    client.FirstName = clientDto.FirstName;
 
-            if (!string.IsNullOrEmpty(clientDto.LastName))
-                client.LastName = clientDto.LastName;
+                if (!string.IsNullOrEmpty(clientDto.LastName))
+                    client.LastName = clientDto.LastName;
 
-            if (clientDto.PhoneNumber != null)
-                client.PhoneNumber = clientDto.PhoneNumber;
+                if (clientDto.PhoneNumber != null)
+                    client.PhoneNumber = clientDto.PhoneNumber;
 
-            if (clientDto.Email != null)
-                client.Email = clientDto.Email;
+                if (clientDto.Email != null)
+                    client.Email = clientDto.Email;
 
-            client.UpdatedAt = DateTime.UtcNow;
+                client.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync();
-            return client;
+                await _context.SaveChangesAsync();
+                return client;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ UpdateAsync error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
-            var client = await _context.Clients.FindAsync(id);
-            if (client == null) return false;
+            try
+            {
+                var client = await _context.Clients.FindAsync(id);
+                if (client == null) return false;
 
-            _context.Clients.Remove(client);
-            await _context.SaveChangesAsync();
-            return true;
+                _context.Clients.Remove(client);
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ DeleteAsync error: {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<bool> ExistsAsync(int id)

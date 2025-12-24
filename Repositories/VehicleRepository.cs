@@ -17,7 +17,7 @@ namespace APIAutoservice156.Repositories
         {
             return await _context.Vehicles
                 .Include(v => v.Client)
-                .Include(v => v.Appointments)
+                //.Include(v => v.Appointments) // ← ЗАКОММЕНТИРУЙ или УДАЛИ
                 .OrderBy(v => v.Brand)
                 .ThenBy(v => v.Model)
                 .ToListAsync();
@@ -27,7 +27,7 @@ namespace APIAutoservice156.Repositories
         {
             return await _context.Vehicles
                 .Include(v => v.Client)
-                .Include(v => v.Appointments)
+                //.Include(v => v.Appointments) // ← ЗАКОММЕНТИРУЙ или УДАЛИ
                 .FirstOrDefaultAsync(v => v.Id == id);
         }
 
@@ -67,8 +67,9 @@ namespace APIAutoservice156.Repositories
         {
             return await _context.Vehicles
                 .Where(v => v.ClientId == clientId)
-                .Include(v => v.Appointments)
                 .ToListAsync();
         }
+
+
     }
 }

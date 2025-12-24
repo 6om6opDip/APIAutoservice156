@@ -18,7 +18,6 @@ namespace APIAutoservice156.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Настройка User
             modelBuilder.Entity<User>()
                 .HasIndex(u => u.Username)
                 .IsUnique();
@@ -27,7 +26,18 @@ namespace APIAutoservice156.Data
                 .HasIndex(u => u.Email)
                 .IsUnique();
 
-            // Остальные настройки...
+            modelBuilder.Entity<Service>()
+                .Property(s => s.Price)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Appointment>()
+                .Property(a => a.TotalPrice)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<ServiceAppointment>()
+                .Property(sa => sa.UnitPrice)
+                .HasPrecision(18, 2);
+
             modelBuilder.Entity<ServiceAppointment>()
                 .HasKey(sa => new { sa.AppointmentId, sa.ServiceId });
 

@@ -55,12 +55,14 @@ namespace APIAutoservice156.Services
                 return null;
             }
 
-            var token = GenerateJwtToken(user);
+            var expires = DateTime.UtcNow.AddMinutes(
+                Convert.ToDouble(_configuration["Jwt:ExpiryMinutes"] ?? "60") // ← ExpiryMinutes!
+            );
 
             return new AuthResponseDTO
             {
-                Token = token,
-                Expires = DateTime.UtcNow.AddHours(Convert.ToDouble(_configuration["Jwt:ExpireHours"])),
+                Token = GenerateJwtToken(user),
+                Expires = expires,
                 Username = user.Username,
                 Email = user.Email,
                 Role = user.Role,
@@ -70,26 +72,36 @@ namespace APIAutoservice156.Services
 
         public string GenerateJwtToken(User user)
         {
+            var secretKey = _configuration["Jwt:SecretKey"];
+
+            // Проверка ключа
+            if (string.IsNullOrEmpty(secretKey) || secretKey.Length < 32)
+            {
+                throw new Exception($"JWT SecretKey слишком короткий! Длина: {secretKey?.Length ?? 0}, нужно минимум 32");
+            }
+
+            Console.WriteLine($"🔐 Генерация токена с ключом длиной: {secretKey.Length}");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]!));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Name, user.Username),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Role, user.Role)
+    };
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(Convert.ToDouble(_configuration["Jwt:ExpireHours"])),
+                expires: DateTime.UtcNow.AddHours(1),
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
-}   
+}
