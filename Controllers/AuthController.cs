@@ -1,5 +1,6 @@
 ﻿using APIAutoservice156.Models.DTO;
 using APIAutoservice156.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace APIAutoservice156.Controllers
@@ -22,6 +23,7 @@ namespace APIAutoservice156.Controllers
         /// <param name="registerDto">Данные для регистрации</param>
         /// <returns>Информация о зарегистрированном пользователе</returns>
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] RegisterRequestDTO registerDto)
         {
             try

@@ -31,7 +31,7 @@ builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 // Сервисы
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// JWT Authentication - КРИТИЧЕСКИ ВАЖНЫЙ БЛОК
+// JWT Authentication
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var secretKey = jwtSettings["SecretKey"];
 
